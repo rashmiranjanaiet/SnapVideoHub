@@ -1,0 +1,13 @@
+{
+  "name": "snapvideohub",
+  "version": "1.0.0",
+  "private": true,
+  "description": "SnapVideoHub frontend with a local Node backend for public media analysis and downloads.",
+  "scripts": {
+    "start": "node server.js",
+    "check": "node --check app.js && node --check server.js"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
