@@ -198,29 +198,33 @@ const allTools = [mp3Tool, ...platforms];
 const platformBySlug = Object.fromEntries(allTools.map((platform) => [platform.slug, platform]));
 const API_BASE = location.protocol === "file:" ? "http://localhost:3000" : "";
 
+const LANGUAGE_STORAGE_KEY = "snapvideohub-language";
+const GOOGLE_TRANSLATE_ELEMENT_ID = "google_translate_element";
+const GOOGLE_TRANSLATE_SCRIPT_ID = "google-translate-script";
+
 const languages = [
-  "English",
-  "हिन्दी (Hindi)",
-  "Español (Spanish)",
-  "Français (French)",
-  "Deutsch (German)",
-  "Português (Portuguese)",
-  "Русский (Russian)",
-  "العربية (Arabic)",
-  "বাংলা (Bengali)",
-  "中文 (Chinese)",
-  "日本語 (Japanese)",
-  "한국어 (Korean)",
-  "Türkçe (Turkish)",
-  "Italiano (Italian)",
-  "Bahasa Indonesia",
-  "தமிழ் (Tamil)",
-  "తెలుగు (Telugu)",
-  "മലയാളം (Malayalam)",
-  "ગુજરાતી (Gujarati)",
-  "ಕನ್ನಡ (Kannada)",
-  "ਪੰਜਾਬੀ (Punjabi)",
-  "اردو (Urdu)"
+  { code: "en", nativeName: "English", name: "English", dir: "ltr" },
+  { code: "hi", nativeName: "हिन्दी", name: "Hindi", dir: "ltr" },
+  { code: "es", nativeName: "Español", name: "Spanish", dir: "ltr" },
+  { code: "fr", nativeName: "Français", name: "French", dir: "ltr" },
+  { code: "de", nativeName: "Deutsch", name: "German", dir: "ltr" },
+  { code: "pt", nativeName: "Português", name: "Portuguese", dir: "ltr" },
+  { code: "ru", nativeName: "Русский", name: "Russian", dir: "ltr" },
+  { code: "ar", nativeName: "العربية", name: "Arabic", dir: "rtl" },
+  { code: "bn", nativeName: "বাংলা", name: "Bengali", dir: "ltr" },
+  { code: "zh-CN", nativeName: "中文", name: "Chinese", dir: "ltr" },
+  { code: "ja", nativeName: "日本語", name: "Japanese", dir: "ltr" },
+  { code: "ko", nativeName: "한국어", name: "Korean", dir: "ltr" },
+  { code: "tr", nativeName: "Türkçe", name: "Turkish", dir: "ltr" },
+  { code: "it", nativeName: "Italiano", name: "Italian", dir: "ltr" },
+  { code: "id", nativeName: "Bahasa Indonesia", name: "Indonesian", dir: "ltr" },
+  { code: "ta", nativeName: "தமிழ்", name: "Tamil", dir: "ltr" },
+  { code: "te", nativeName: "తెలుగు", name: "Telugu", dir: "ltr" },
+  { code: "ml", nativeName: "മലയാളം", name: "Malayalam", dir: "ltr" },
+  { code: "gu", nativeName: "ગુજરાતી", name: "Gujarati", dir: "ltr" },
+  { code: "kn", nativeName: "ಕನ್ನಡ", name: "Kannada", dir: "ltr" },
+  { code: "pa", nativeName: "ਪੰਜਾਬੀ", name: "Punjabi", dir: "ltr" },
+  { code: "ur", nativeName: "اردو", name: "Urdu", dir: "rtl" }
 ];
 
 const tutorials = [
@@ -537,6 +541,7 @@ const legalDocs = {
 
 document.addEventListener("DOMContentLoaded", () => {
   applyTheme();
+  applySavedLanguageShell();
   renderHeader();
   renderFooter();
   renderSearchModal();
@@ -577,6 +582,7 @@ function renderHeader() {
   const currentPage = document.body.dataset.page;
   const currentPlatform = new URLSearchParams(location.search).get("platform") || "";
   const currentDoc = new URLSearchParams(location.search).get("doc") || "";
+  const selectedLanguage = getSelectedLanguage();
   const links = [
     ["Home", "index.html", currentPage === "home"],
     ["YouTube Downloader", "platform.html?platform=youtube", currentPlatform === "youtube"],
@@ -602,9 +608,14 @@ function renderHeader() {
         </nav>
         <div class="nav-actions">
           <div class="language-wrap">
-            <button class="icon-btn" type="button" data-language-toggle aria-label="Language" title="Language"><i data-lucide="languages"></i></button>
+            <button class="icon-btn" type="button" data-language-toggle aria-label="Language: ${escapeHtml(languageDisplayName(selectedLanguage))}" title="Language: ${escapeHtml(languageDisplayName(selectedLanguage))}"><i data-lucide="languages"></i></button>
             <div class="language-menu" data-language-menu hidden>
-              ${languages.map((language) => `<button type="button" data-language-option="${escapeHtml(language)}">${language}</button>`).join("")}
+              ${languages.map((language) => `
+                <button type="button" data-language-option="${language.code}" lang="${language.code}" dir="${language.dir}" aria-pressed="${language.code === selectedLanguage.code ? "true" : "false"}">
+                  <span>${escapeHtml(language.nativeName)}</span>
+                  <small>${escapeHtml(language.name)}</small>
+                </button>
+              `).join("")}
             </div>
           </div>
           <button class="icon-btn" type="button" data-theme-toggle aria-label="Dark mode" title="Dark mode"><i data-lucide="moon"></i></button>
@@ -685,17 +696,7 @@ function bindGlobalControls() {
     link.addEventListener("click", () => document.body.classList.remove("nav-open"));
   });
 
-  const languageToggle = document.querySelector("[data-language-toggle]");
-  const languageMenu = document.querySelector("[data-language-menu]");
-  languageToggle?.addEventListener("click", () => {
-    languageMenu.hidden = !languageMenu.hidden;
-  });
-  document.querySelectorAll("[data-language-option]").forEach((button) => {
-    button.addEventListener("click", () => {
-      showToast(`Language selected: ${button.dataset.languageOption}`);
-      languageMenu.hidden = true;
-    });
-  });
+  bindLanguageControls();
 
   document.querySelector("[data-theme-toggle]")?.addEventListener("click", () => {
     const next = document.documentElement.dataset.theme === "dark" ? "light" : "dark";
@@ -735,6 +736,196 @@ function bindGlobalControls() {
       submitContactForm(event.target);
     }
   });
+}
+
+function bindLanguageControls() {
+  const languageToggle = document.querySelector("[data-language-toggle]");
+  const languageMenu = document.querySelector("[data-language-menu]");
+  const languageWrap = document.querySelector(".language-wrap");
+  const selectedLanguage = getSelectedLanguage();
+
+  applyLanguageShell(selectedLanguage);
+  updateLanguageButtons(selectedLanguage.code);
+
+  if (selectedLanguage.code !== "en") {
+    loadGoogleTranslate(selectedLanguage.code);
+  }
+
+  languageToggle?.addEventListener("click", (event) => {
+    event.stopPropagation();
+    if (languageMenu) languageMenu.hidden = !languageMenu.hidden;
+  });
+
+  languageMenu?.addEventListener("click", (event) => {
+    const button = event.target.closest("[data-language-option]");
+    if (!button) return;
+    selectLanguage(button.dataset.languageOption);
+  });
+
+  document.addEventListener("click", (event) => {
+    if (languageMenu && !languageMenu.hidden && !languageWrap?.contains(event.target)) {
+      languageMenu.hidden = true;
+    }
+  });
+}
+
+function selectLanguage(code) {
+  const language = getLanguageByCode(code);
+  const languageMenu = document.querySelector("[data-language-menu]");
+
+  localStorage.setItem(LANGUAGE_STORAGE_KEY, language.code);
+  applyLanguageShell(language);
+  updateLanguageButtons(language.code);
+  if (languageMenu) languageMenu.hidden = true;
+
+  if (language.code === "en") {
+    clearGoogleTranslateCookie();
+    showToast("Language changed to English.");
+    if (isGoogleTranslated()) {
+      setTimeout(() => location.reload(), 350);
+    }
+    return;
+  }
+
+  setGoogleTranslateCookie(language.code);
+  showToast(`Language changed to ${languageDisplayName(language)}.`);
+  loadGoogleTranslate(language.code);
+}
+
+function applySavedLanguageShell() {
+  applyLanguageShell(getSelectedLanguage());
+}
+
+function applyLanguageShell(language) {
+  const selected = language || languages[0];
+  document.documentElement.lang = selected.code;
+  document.documentElement.dir = selected.dir || "ltr";
+}
+
+function updateLanguageButtons(code) {
+  const language = getLanguageByCode(code);
+  const label = `Language: ${languageDisplayName(language)}`;
+  const toggle = document.querySelector("[data-language-toggle]");
+
+  toggle?.setAttribute("aria-label", label);
+  toggle?.setAttribute("title", label);
+
+  document.querySelectorAll("[data-language-option]").forEach((button) => {
+    button.setAttribute("aria-pressed", String(button.dataset.languageOption === language.code));
+  });
+}
+
+function getSelectedLanguage() {
+  return getLanguageByCode(localStorage.getItem(LANGUAGE_STORAGE_KEY) || getGoogleTranslateCookieLanguage() || "en");
+}
+
+function getLanguageByCode(code) {
+  return languages.find((language) => language.code === code) || languages[0];
+}
+
+function languageDisplayName(language) {
+  const selected = language || languages[0];
+  return selected.nativeName === selected.name ? selected.name : `${selected.nativeName} (${selected.name})`;
+}
+
+function getGoogleTranslateCookieLanguage() {
+  const match = document.cookie.match(/(?:^|;\s*)googtrans=([^;]+)/);
+  if (!match) return "";
+  const value = decodeURIComponent(match[1]);
+  return value.split("/")[2] || "";
+}
+
+function loadGoogleTranslate(languageCode) {
+  const language = getLanguageByCode(languageCode);
+  if (language.code === "en") return;
+
+  setGoogleTranslateCookie(language.code);
+  ensureGoogleTranslateMount();
+  window.googleTranslateTargetLanguage = language.code;
+  window.googleTranslateElementInit = () => {
+    const translateApi = window.google?.translate;
+    if (!translateApi?.TranslateElement) return;
+
+    new translateApi.TranslateElement({
+      pageLanguage: "en",
+      includedLanguages: languages.filter((item) => item.code !== "en").map((item) => item.code).join(","),
+      autoDisplay: false
+    }, GOOGLE_TRANSLATE_ELEMENT_ID);
+    waitForGoogleTranslateCombo(window.googleTranslateTargetLanguage);
+  };
+
+  if (document.getElementById(GOOGLE_TRANSLATE_SCRIPT_ID)) {
+    if (!document.querySelector(".goog-te-combo")) {
+      window.googleTranslateElementInit();
+    }
+    waitForGoogleTranslateCombo(language.code);
+    return;
+  }
+
+  const script = document.createElement("script");
+  script.id = GOOGLE_TRANSLATE_SCRIPT_ID;
+  script.src = "https://translate.google.com/translate_a/element.js?cb=googleTranslateElementInit";
+  script.async = true;
+  script.onerror = () => showToast("Translation service could not load. Check your internet connection.");
+  document.body.appendChild(script);
+}
+
+function ensureGoogleTranslateMount() {
+  let mount = document.getElementById(GOOGLE_TRANSLATE_ELEMENT_ID);
+  if (mount) return mount;
+
+  mount = document.createElement("div");
+  mount.id = GOOGLE_TRANSLATE_ELEMENT_ID;
+  mount.className = "google-translate-mount";
+  mount.setAttribute("aria-hidden", "true");
+  document.body.appendChild(mount);
+  return mount;
+}
+
+function waitForGoogleTranslateCombo(languageCode, attempt = 0) {
+  const combo = document.querySelector(".goog-te-combo");
+  if (combo) {
+    combo.value = languageCode;
+    combo.dispatchEvent(new Event("change"));
+    return;
+  }
+
+  if (attempt < 30) {
+    setTimeout(() => waitForGoogleTranslateCombo(languageCode, attempt + 1), 250);
+  }
+}
+
+function setGoogleTranslateCookie(languageCode) {
+  writeGoogleTranslateCookie(`/en/${languageCode}`);
+}
+
+function clearGoogleTranslateCookie() {
+  expireGoogleTranslateCookie();
+}
+
+function writeGoogleTranslateCookie(value) {
+  document.cookie = `googtrans=${value}; path=/`;
+  const hostname = location.hostname;
+  if (canUseDomainCookie(hostname)) {
+    document.cookie = `googtrans=${value}; path=/; domain=.${hostname}`;
+  }
+}
+
+function expireGoogleTranslateCookie() {
+  document.cookie = "googtrans=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/";
+  const hostname = location.hostname;
+  if (canUseDomainCookie(hostname)) {
+    document.cookie = `googtrans=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/; domain=.${hostname}`;
+  }
+}
+
+function canUseDomainCookie(hostname) {
+  return Boolean(hostname && hostname.includes(".") && !/^\d{1,3}(\.\d{1,3}){3}$/.test(hostname));
+}
+
+function isGoogleTranslated() {
+  const translatedClass = `${document.documentElement.className} ${document.body.className}`;
+  return translatedClass.includes("translated") || Boolean(document.querySelector(".goog-te-combo"));
 }
 
 function applyTheme() {
@@ -1333,7 +1524,7 @@ function renderBlogGrid() {
 function renderLanguageCloud() {
   const mount = document.querySelector("[data-language-cloud]");
   if (!mount) return;
-  mount.innerHTML = languages.map((language) => `<span>${language}</span>`).join("");
+  mount.innerHTML = languages.map((language) => `<span lang="${language.code}" dir="${language.dir}">${escapeHtml(languageDisplayName(language))}</span>`).join("");
 }
 
 function renderSearchResults(query, mount) {

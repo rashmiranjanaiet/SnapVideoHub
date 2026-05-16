@@ -207,8 +207,44 @@ textarea {
   cursor: pointer;
 }
 
-.language-menu button:hover {
+.language-menu button span,
+.language-menu button small {
+  display: block;
+}
+
+.language-menu button small {
+  margin-top: 2px;
+  color: var(--muted);
+  font-size: 0.76rem;
+}
+
+.language-menu button:hover,
+.language-menu button[aria-pressed="true"] {
   background: var(--surface-soft);
+}
+
+.language-menu button[aria-pressed="true"] {
+  color: var(--accent-blue);
+}
+
+.google-translate-mount {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.goog-te-banner-frame,
+.goog-te-gadget,
+.VIpgJd-ZVi9od-ORHb-OEVmcd {
+  display: none !important;
+}
+
+body {
+  top: 0 !important;
 }
 
 .hero {
@@ -1543,8 +1579,12 @@ textarea:focus {
     height: 38px;
   }
 
-  .language-wrap {
-    display: none;
+  .language-menu {
+    position: fixed;
+    top: 72px;
+    right: 12px;
+    width: min(260px, calc(100vw - 24px));
+    max-height: calc(100svh - 84px);
   }
 
   .hero-home {
@@ -1647,6 +1687,25 @@ textarea:focus {
 
   .legal-tabs {
     grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 420px) {
+  .brand-link {
+    min-width: 112px;
+  }
+
+  .brand-link img {
+    width: 118px;
+  }
+
+  .nav-actions {
+    gap: 4px;
+  }
+
+  .icon-btn {
+    width: 34px;
+    height: 34px;
   }
 }
 
