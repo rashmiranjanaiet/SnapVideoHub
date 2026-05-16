@@ -14,7 +14,7 @@ SnapVideoHub should be deployed as a Render Web Service with the Docker runtime.
 https://YOUR-RENDER-SERVICE.onrender.com/api/health
 ```
 
-You should see `extractor.ok: true` and `ffmpeg.ok: true`.
+You should see top-level `ytDlp: true` and `ffmpeg: true`. Detailed tool output is also returned under `tools.ytDlp` and `tools.ffmpeg`.
 
 ## Option B: Create Web Service Manually
 

@@ -115,14 +115,22 @@ async function handleHealth(response) {
     mediaExtractorStatus(),
     ffmpegStatus()
   ]);
+  const ytDlpReady = Boolean(extractor.ok);
+  const ffmpegReady = Boolean(ffmpeg.ok);
 
   sendJson(response, 200, {
     ok: true,
     service: "SnapVideoHub backend",
+    ytDlp: ytDlpReady,
+    ffmpeg: ffmpegReady,
     host,
     port,
+    tools: {
+      ytDlp: extractor,
+      ffmpeg
+    },
     extractor,
-    ffmpeg
+    ffmpegStatus: ffmpeg
   });
 }
 

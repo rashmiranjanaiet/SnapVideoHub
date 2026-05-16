@@ -503,6 +503,27 @@ textarea:focus {
   line-height: 1.5;
 }
 
+.download-health-note {
+  margin: 10px 2px 0;
+  color: var(--muted);
+  font-size: 0.9rem;
+  font-weight: 800;
+  line-height: 1.45;
+}
+
+.download-health-ready {
+  color: color-mix(in srgb, var(--accent-green) 72%, var(--text));
+}
+
+.download-health-warning,
+.download-health-stale {
+  color: color-mix(in srgb, var(--accent-yellow) 76%, var(--text));
+}
+
+.download-health-offline {
+  color: color-mix(in srgb, var(--accent-pink) 68%, var(--text));
+}
+
 .download-legal-note a {
   color: var(--accent-blue);
   font-weight: 800;

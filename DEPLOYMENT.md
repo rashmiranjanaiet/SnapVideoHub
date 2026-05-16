@@ -74,7 +74,16 @@ http://YOUR_VPS_IP:3000/api/health
 The response should show:
 
 ```json
-"extractor": { "ok": true, "installed": true }
+{
+  "ok": true,
+  "service": "SnapVideoHub backend",
+  "ytDlp": true,
+  "ffmpeg": true,
+  "tools": {
+    "ytDlp": { "ok": true, "installed": true },
+    "ffmpeg": { "ok": true, "installed": true }
+  }
+}
 ```
 
 ## 4. Keep It Running With PM2
@@ -127,9 +136,9 @@ curl https://snapvideohub.com/api/health
 
 ## 6. Common Fixes
 
-- If the website loads but downloads show `Connector or public access required`, run `https://snapvideohub.com/api/health` and check `extractor.ok`.
-- If `extractor.ok` is false, install or upgrade `yt-dlp`, set `YTDLP_PATH`, and restart PM2.
-- If only high quality or MP3 fails, check `ffmpeg.ok`.
+- If the website loads but downloads show `Connector or public access required`, run `https://snapvideohub.com/api/health` and check `ytDlp`.
+- If `ytDlp` is false, install or upgrade `yt-dlp`, set `YTDLP_PATH`, and restart PM2.
+- If only high quality or MP3 fails, check `ffmpeg`.
 - If YouTube says `Sign in to confirm you're not a bot`, the VPS IP is being challenged by YouTube. Direct media links can still work, but YouTube extraction may fail on that IP even when `yt-dlp` is installed.
 - If a private/login/copyright-restricted link fails, that is expected. Use only public media you own or are authorized to download.
 - Keep `yt-dlp` updated because platform page formats change:

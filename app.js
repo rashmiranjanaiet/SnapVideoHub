@@ -279,6 +279,7 @@ const serviceStatus = {
   }
 };
 const API_BASE = location.protocol === "file:" ? "http://localhost:3000" : "";
+let backendHealth = null;
 
 const LANGUAGE_STORAGE_KEY = "snapvideohub-language";
 const GOOGLE_TRANSLATE_ELEMENT_ID = "google_translate_element";
@@ -817,6 +818,7 @@ document.addEventListener("DOMContentLoaded", () => {
   bindGlobalControls();
   initReveal();
   refreshIcons();
+  refreshBackendHealth();
 });
 
 function routePage() {
@@ -1282,6 +1284,7 @@ function renderDownloader(mount, defaultPlatform = "auto") {
         <button class="btn btn-primary" type="submit"><i data-lucide="download"></i> Download Now</button>
       </div>
       <div class="result-panel" data-result-panel hidden></div>
+      ${backendHealthHtml()}
       <p class="download-legal-note">
         Best live support: direct media URLs, Facebook, X/Twitter video posts, Twitch, and Discord CDN links. Other platforms can be limited by login, bot, or source access checks.
         Respect copyright. Only download or back up content you are authorized to keep.
@@ -1291,6 +1294,109 @@ function renderDownloader(mount, defaultPlatform = "auto") {
   `;
   bindDownloader(mount.querySelector("[data-downloader-form]"));
   refreshIcons();
+}
+
+async function refreshBackendHealth() {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 5000);
+
+  try {
+    const response = await fetch(`${API_BASE}/api/health`, {
+      cache: "no-store",
+      signal: controller.signal
+    });
+    const data = await response.json();
+    if (!response.ok || !data.ok) throw new Error(data.message || "Health check failed.");
+    backendHealth = normalizeBackendHealth(data, true);
+  } catch {
+    backendHealth = {
+      reachable: false,
+      ytDlp: { known: false, ready: false },
+      ffmpeg: { known: false, ready: false }
+    };
+  } finally {
+    clearTimeout(timeout);
+    updateBackendHealthNotes();
+  }
+}
+
+function normalizeBackendHealth(data, reachable) {
+  return {
+    reachable,
+    ytDlp: readHealthTool(data, ["ytDlp", "tools.ytDlp", "checks.ytDlp", "extractor"]),
+    ffmpeg: readHealthTool(data, ["ffmpeg", "tools.ffmpeg", "checks.ffmpeg", "ffmpegStatus"])
+  };
+}
+
+function readHealthTool(data, paths) {
+  for (const itemPath of paths) {
+    const state = healthToolState(valueAtPath(data, itemPath));
+    if (state.known) return state;
+  }
+  return { known: false, ready: false };
+}
+
+function valueAtPath(source, itemPath) {
+  return itemPath.split(".").reduce((value, key) => value?.[key], source);
+}
+
+function healthToolState(value) {
+  if (typeof value === "boolean") {
+    return { known: true, ready: value };
+  }
+
+  if (value && typeof value === "object" && ("ok" in value || "installed" in value)) {
+    return { known: true, ready: "ok" in value ? Boolean(value.ok) : Boolean(value.installed) };
+  }
+
+  return { known: false, ready: false };
+}
+
+function backendHealthHtml() {
+  return `<p class="download-health-note download-health-${backendHealthLevel()}" data-backend-health>${escapeHtml(backendHealthText())}</p>`;
+}
+
+function updateBackendHealthNotes() {
+  document.querySelectorAll("[data-backend-health]").forEach((note) => {
+    note.textContent = backendHealthText();
+    note.className = `download-health-note download-health-${backendHealthLevel()}`;
+  });
+}
+
+function backendHealthLevel() {
+  if (!backendHealth) return "checking";
+  if (!backendHealth.reachable) return "offline";
+  if (!backendHealth.ytDlp.known || !backendHealth.ffmpeg.known) return "stale";
+  if (backendHealth.ytDlp.ready && backendHealth.ffmpeg.ready) return "ready";
+  return "warning";
+}
+
+function backendHealthText() {
+  if (!backendHealth) {
+    return "Checking backend tools...";
+  }
+
+  if (!backendHealth.reachable) {
+    return "Backend health is not reachable from this page.";
+  }
+
+  if (!backendHealth.ytDlp.known || !backendHealth.ffmpeg.known) {
+    return "Backend is reachable, but this health API is old and does not report yt-dlp and ffmpeg.";
+  }
+
+  if (backendHealth.ytDlp.ready && backendHealth.ffmpeg.ready) {
+    return "Backend tools connected: yt-dlp and ffmpeg are ready.";
+  }
+
+  if (!backendHealth.ytDlp.ready && !backendHealth.ffmpeg.ready) {
+    return "Backend reached, but yt-dlp and ffmpeg are not connected to this Node process.";
+  }
+
+  if (!backendHealth.ytDlp.ready) {
+    return "Backend reached, but yt-dlp is not connected to this Node process.";
+  }
+
+  return "Backend reached and yt-dlp is ready; ffmpeg is not connected, so MP3 conversion and merged HD can fail.";
 }
 
 function formatRadio(value, label, icon, checked) {
