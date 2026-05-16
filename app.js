@@ -1330,12 +1330,13 @@ function resultHtml(data, fallbackTool, format, quality) {
       <div class="result-card result-card-wide">
         <strong><i data-lucide="alert-circle"></i> Try another public link</strong>
         <p>${escapeHtml(userFriendlyError(data.message))}</p>
+        ${data.note ? `<p>${escapeHtml(data.note)}</p>` : ""}
         ${data.message ? `<details class="result-details"><summary>Technical reason</summary><p>${escapeHtml(data.message)}</p></details>` : ""}
       </div>
     `;
   const note = options.length
     ? "100% done. Preview the media here, or save the file to your device."
-    : "Use a public video, reel, post, or direct media file link.";
+    : data.note || "Use a public video, reel, post, or direct media file link.";
 
   return `
     <div class="result-topline">

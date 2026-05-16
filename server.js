@@ -62,13 +62,17 @@ const platforms = [
 
 const platformBySlug = Object.fromEntries(platforms.map((platform) => [platform.slug, platform]));
 let mediaExtractorToolPromise = null;
+let mediaExtractorTool = null;
+let mediaExtractorCheckedAt = 0;
+const extractorFoundCacheMs = 5 * 60 * 1000;
+const extractorMissingCacheMs = 30 * 1000;
 
 const server = http.createServer(async (request, response) => {
   try {
     const url = new URL(request.url, `http://${request.headers.host || "localhost"}`);
 
     if (request.method === "GET" && url.pathname === "/api/health") {
-      return sendJson(response, 200, { ok: true, service: "SnapVideoHub backend" });
+      return handleHealth(response);
     }
 
     if (request.method === "POST" && url.pathname === "/api/analyze") {
@@ -104,6 +108,21 @@ const server = http.createServer(async (request, response) => {
 server.listen(port, () => {
   console.log(`SnapVideoHub is running at http://localhost:${port}`);
 });
+
+async function handleHealth(response) {
+  const [extractor, ffmpeg] = await Promise.all([
+    mediaExtractorStatus(),
+    ffmpegStatus()
+  ]);
+
+  sendJson(response, 200, {
+    ok: true,
+    service: "SnapVideoHub backend",
+    port,
+    extractor,
+    ffmpeg
+  });
+}
 
 async function handleAnalyze(request, response) {
   const body = await readJsonBody(request);
@@ -210,8 +229,8 @@ async function handleExtractorAnalyze(remoteUrl, platform, requestOptions, respo
       ok: true,
       status: "connector_required",
       platformName: platform.name,
-      message: `${platform.name} connector is not installed. Install yt-dlp, then restart this server.`,
-      note: "Windows install command: py -m pip install --user yt-dlp. The connector is shared by all supported public platform pages.",
+      message: `${platform.name} connector is not installed or is not available to this Node process.`,
+      note: "On the Hostinger VPS, install yt-dlp and ffmpeg, set YTDLP_PATH if yt-dlp is in a custom path, then restart the Node app. Hostinger shared hosting usually cannot run this connector.",
       options: []
     });
   }
@@ -650,28 +669,104 @@ async function safeHead(url) {
 }
 
 async function getMediaExtractorTool() {
+  const now = Date.now();
+  const cacheMs = mediaExtractorTool ? extractorFoundCacheMs : extractorMissingCacheMs;
+  if (mediaExtractorCheckedAt && now - mediaExtractorCheckedAt < cacheMs) {
+    return mediaExtractorTool;
+  }
+
   if (!mediaExtractorToolPromise) {
-    mediaExtractorToolPromise = findMediaExtractorTool();
+    mediaExtractorToolPromise = findMediaExtractorTool()
+      .then((tool) => {
+        mediaExtractorTool = tool;
+        mediaExtractorCheckedAt = Date.now();
+        return tool;
+      })
+      .finally(() => {
+        mediaExtractorToolPromise = null;
+      });
   }
   return mediaExtractorToolPromise;
 }
 
 async function findMediaExtractorTool() {
   const candidates = [
+    process.env.YTDLP_PATH ? { command: process.env.YTDLP_PATH, prefixArgs: [] } : null,
     { command: "yt-dlp", prefixArgs: [] },
     { command: "py", prefixArgs: ["-m", "yt_dlp"] },
-    { command: "python", prefixArgs: ["-m", "yt_dlp"] }
-  ];
+    { command: "python", prefixArgs: ["-m", "yt_dlp"] },
+    { command: "python3", prefixArgs: ["-m", "yt_dlp"] }
+  ].filter(Boolean);
 
   for (const candidate of candidates) {
     try {
-      await execFileText(candidate.command, [...candidate.prefixArgs, "--version"], { timeout: 10000, maxBuffer: 20000 });
-      return candidate;
+      const version = await execFileText(candidate.command, [...candidate.prefixArgs, "--version"], { timeout: 10000, maxBuffer: 20000 });
+      return {
+        ...candidate,
+        version: firstOutputLine(version)
+      };
     } catch {
       // Try the next candidate.
     }
   }
   return null;
+}
+
+async function mediaExtractorStatus() {
+  const tool = await getMediaExtractorTool();
+  if (!tool) {
+    return {
+      ok: false,
+      installed: false,
+      name: "yt-dlp",
+      message: "yt-dlp was not found in PATH, Python modules, or YTDLP_PATH."
+    };
+  }
+
+  return {
+    ok: true,
+    installed: true,
+    name: "yt-dlp",
+    command: commandLabel(tool),
+    version: tool.version || ""
+  };
+}
+
+async function ffmpegStatus() {
+  const candidates = [
+    process.env.FFMPEG_PATH ? { command: process.env.FFMPEG_PATH, prefixArgs: [] } : null,
+    { command: "ffmpeg", prefixArgs: [] }
+  ].filter(Boolean);
+
+  for (const candidate of candidates) {
+    try {
+      const output = await execFileText(candidate.command, [...candidate.prefixArgs, "-version"], { timeout: 10000, maxBuffer: 80000 });
+      return {
+        ok: true,
+        installed: true,
+        name: "ffmpeg",
+        command: commandLabel(candidate),
+        version: firstOutputLine(output)
+      };
+    } catch {
+      // ffmpeg is optional, so keep looking and report a soft failure below.
+    }
+  }
+
+  return {
+    ok: false,
+    installed: false,
+    name: "ffmpeg",
+    message: "ffmpeg was not found. Basic direct streams can work, but MP3 conversion and merged HD formats may fail."
+  };
+}
+
+function commandLabel(tool) {
+  return [tool.command, ...(tool.prefixArgs || [])].join(" ");
+}
+
+function firstOutputLine(value) {
+  return String(value || "").replace(/\r/g, "").split("\n").map((line) => line.trim()).find(Boolean) || "";
 }
 
 async function getExtractorInfo(tool, url) {
