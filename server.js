@@ -239,12 +239,13 @@ async function handleExtractorAnalyze(remoteUrl, platform, requestOptions, respo
   try {
     info = await getExtractorInfo(tool, remoteUrl.href);
   } catch (error) {
+    const message = cleanExtractorError(error.message);
     return sendJson(response, 200, {
       ok: true,
       status: "connector_required",
       platformName: platform.name,
-      message: cleanExtractorError(error.message),
-      note: "Only public media is supported. The server does not use account cookies, bypass logins, bypass private pages, remove DRM, or remove watermarks.",
+      message,
+      note: extractorFailureNote(message, platform),
       options: []
     });
   }
@@ -908,7 +909,12 @@ function scoreAudioFormat(format) {
 }
 
 function cleanExtractorError(message) {
-  const text = String(message || "")
+  const source = String(message || "");
+  if (/sign in to confirm.*not a bot|confirm you'?re not a bot|captcha|unusual traffic/i.test(source)) {
+    return "The platform is blocking this server/VPS IP with a bot or captcha challenge.";
+  }
+
+  const text = source
     .replace(/\r/g, "")
     .split("\n")
     .map((line) => line.replace(/^ERROR:\s*/i, "").trim())
@@ -916,6 +922,14 @@ function cleanExtractorError(message) {
     .slice(-3)
     .join(" ");
   return text || "Public media connector could not process this link.";
+}
+
+function extractorFailureNote(message, platform) {
+  if (/bot|captcha|unusual traffic/i.test(message)) {
+    return `${platform.name} is challenging the VPS IP before public extraction can run. Update yt-dlp, retry later, use direct public media URLs, or use another platform/source that does not challenge the server. Do not put personal account cookies into a public downloader.`;
+  }
+
+  return "Only public media is supported. The server does not use account cookies, bypass logins, bypass private pages, remove DRM, or remove watermarks.";
 }
 
 function sendJson(response, statusCode, payload) {

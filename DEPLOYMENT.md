@@ -39,6 +39,23 @@ If `yt-dlp` works only from a custom path, set it when starting the app:
 export YTDLP_PATH="$HOME/.local/bin/yt-dlp"
 ```
 
+If `apt install pipx` fails with broken package/dependency messages, skip pipx and install the standalone `yt-dlp` binary:
+
+```bash
+sudo apt update
+sudo apt install -y curl ffmpeg
+sudo curl -L https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp -o /usr/local/bin/yt-dlp
+sudo chmod a+rx /usr/local/bin/yt-dlp
+yt-dlp --version
+ffmpeg -version
+```
+
+Then start or restart the app with:
+
+```bash
+YTDLP_PATH=/usr/local/bin/yt-dlp pm2 restart snapvideohub --update-env
+```
+
 ## 3. Run The App
 
 From the project folder:
@@ -113,10 +130,11 @@ curl https://snapvideohub.com/api/health
 - If the website loads but downloads show `Connector or public access required`, run `https://snapvideohub.com/api/health` and check `extractor.ok`.
 - If `extractor.ok` is false, install or upgrade `yt-dlp`, set `YTDLP_PATH`, and restart PM2.
 - If only high quality or MP3 fails, check `ffmpeg.ok`.
+- If YouTube says `Sign in to confirm you're not a bot`, the VPS IP is being challenged by YouTube. Direct media links can still work, but YouTube extraction may fail on that IP even when `yt-dlp` is installed.
 - If a private/login/copyright-restricted link fails, that is expected. Use only public media you own or are authorized to download.
 - Keep `yt-dlp` updated because platform page formats change:
 
 ```bash
-pipx upgrade yt-dlp
+sudo /usr/local/bin/yt-dlp -U
 pm2 restart snapvideohub --update-env
 ```

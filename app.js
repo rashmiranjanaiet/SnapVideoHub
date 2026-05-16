@@ -1484,6 +1484,7 @@ function finishResultProgress(progress) {
 function userFriendlyError(message) {
   const text = String(message || "").toLowerCase();
   if (text.includes("unsupported url")) return "This link is not a supported public media page. Try a direct video, image, reel, post, or attachment link.";
+  if (text.includes("bot") || text.includes("captcha") || text.includes("unusual traffic")) return "The platform is blocking this server right now. Try a direct public media link, another public source, or retry after the server tools are updated.";
   if (text.includes("login") || text.includes("private") || text.includes("403")) return "This media looks private or restricted. Try a public link that opens without signing in.";
   if (text.includes("timed out") || text.includes("timeout")) return "The platform took too long to respond. Try again, or use another public link.";
   if (text.includes("no video")) return "No playable video was found in this post. Try a post that contains a video.";
