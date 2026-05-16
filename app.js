@@ -196,6 +196,88 @@ const mp3Tool = {
 
 const allTools = [mp3Tool, ...platforms];
 const platformBySlug = Object.fromEntries(allTools.map((platform) => [platform.slug, platform]));
+const serviceStatus = {
+  mp3: {
+    level: "direct",
+    label: "Direct links",
+    detail: "Works for direct public audio and media file URLs. Platform audio extraction depends on the source."
+  },
+  facebook: {
+    level: "working",
+    label: "Working",
+    detail: "Live test returned downloadable public media options."
+  },
+  x: {
+    level: "working",
+    label: "Working",
+    detail: "Live test works for public X/Twitter posts that contain video media."
+  },
+  discord: {
+    level: "working",
+    label: "Direct media",
+    detail: "Works for public Discord CDN media and attachment URLs."
+  },
+  twitch: {
+    level: "working",
+    label: "Working",
+    detail: "Live test returned Twitch public VOD media options."
+  },
+  youtube: {
+    level: "blocked",
+    label: "Blocked on VPS",
+    detail: "YouTube is challenging the Hostinger VPS IP with bot/captcha checks."
+  },
+  instagram: {
+    level: "limited",
+    label: "Login-limited",
+    detail: "Instagram often requires logged-in public access from VPS servers."
+  },
+  tiktok: {
+    level: "limited",
+    label: "Unstable",
+    detail: "TikTok returned unexpected platform responses from the VPS."
+  },
+  reddit: {
+    level: "limited",
+    label: "Login-limited",
+    detail: "Reddit returned account authentication requirements in live testing."
+  },
+  telegram: {
+    level: "limited",
+    label: "Timeout risk",
+    detail: "Telegram requests timed out behind Nginx during live testing."
+  },
+  dailymotion: {
+    level: "limited",
+    label: "Needs extra deps",
+    detail: "Dailymotion may need browser impersonation dependencies and can reset VPS requests."
+  },
+  pinterest: {
+    level: "limited",
+    label: "Media-dependent",
+    detail: "Pinterest support depends on pins that expose downloadable video/media formats."
+  },
+  threads: {
+    level: "limited",
+    label: "Media-dependent",
+    detail: "Threads public post extraction is inconsistent from the VPS."
+  },
+  snapchat: {
+    level: "limited",
+    label: "Media-dependent",
+    detail: "Snapchat public Spotlight links can expire or return 404."
+  },
+  linkedin: {
+    level: "limited",
+    label: "Login-limited",
+    detail: "LinkedIn often hides post media behind login or access checks."
+  },
+  whatsapp: {
+    level: "limited",
+    label: "Direct links only",
+    detail: "WhatsApp status media is usually local/private; only direct public media links are suitable."
+  }
+};
 const API_BASE = location.protocol === "file:" ? "http://localhost:3000" : "";
 
 const LANGUAGE_STORAGE_KEY = "snapvideohub-language";
@@ -1166,7 +1248,11 @@ function renderDownloaders() {
 function renderDownloader(mount, defaultPlatform = "auto") {
   const options = [
     `<option value="auto"${defaultPlatform === "auto" ? " selected" : ""}>Auto Detect</option>`,
-    ...allTools.map((platform) => `<option value="${platform.slug}"${defaultPlatform === platform.slug ? " selected" : ""}>${platform.name}</option>`)
+    ...allTools.map((platform) => {
+      const status = serviceStatus[platform.slug];
+      const label = status ? `${platform.name} - ${status.label}` : platform.name;
+      return `<option value="${platform.slug}"${defaultPlatform === platform.slug ? " selected" : ""}>${escapeHtml(label)}</option>`;
+    })
   ].join("");
   mount.innerHTML = `
     <form class="download-panel" data-downloader-form>
@@ -1197,7 +1283,8 @@ function renderDownloader(mount, defaultPlatform = "auto") {
       </div>
       <div class="result-panel" data-result-panel hidden></div>
       <p class="download-legal-note">
-        Respect copyright. Only download or back up content you are authorized to keep. No infringement or illegal use.
+        Best live support: direct media URLs, Facebook, X/Twitter video posts, Twitch, and Discord CDN links. Other platforms can be limited by login, bot, or source access checks.
+        Respect copyright. Only download or back up content you are authorized to keep.
         By using this service, you agree to the <a href="legal.html?doc=terms">Terms of Service</a>.
       </p>
     </form>
@@ -1567,21 +1654,60 @@ function hostMatchesDomain(hostname, domain) {
   return hostname === domain || hostname.endsWith(`.${domain}`);
 }
 
+function platformStatus(platform) {
+  return serviceStatus[platform.slug] || {
+    level: "limited",
+    label: "Source-dependent",
+    detail: "Availability depends on the public source link."
+  };
+}
+
+function statusRank(platform) {
+  return {
+    working: 0,
+    direct: 1,
+    limited: 2,
+    blocked: 3
+  }[platformStatus(platform).level] ?? 4;
+}
+
+function sortedPlatforms(items = platforms) {
+  return [...items].sort((a, b) => statusRank(a) - statusRank(b) || a.name.localeCompare(b.name));
+}
+
+function platformStatusBadgeHtml(platform) {
+  const status = platformStatus(platform);
+  return `<span class="platform-status-badge platform-status-${status.level}">${escapeHtml(status.label)}</span>`;
+}
+
+function platformStatusPanelHtml(platform) {
+  const status = platformStatus(platform);
+  return `
+    <div class="platform-status-panel platform-status-panel-${status.level}">
+      <strong>${escapeHtml(status.label)}</strong>
+      <p>${escapeHtml(status.detail)}</p>
+    </div>
+  `;
+}
+
 function renderPlatformGrids() {
   document.querySelectorAll("[data-platform-grid]").forEach((mount) => {
-    mount.innerHTML = platforms.map(platformCard).join("");
+    mount.innerHTML = sortedPlatforms().map(platformCard).join("");
   });
 }
 
 function platformCard(platform) {
+  const status = platformStatus(platform);
   return `
-    <a class="platform-card reveal" style="--platform-color: ${platform.color}" href="platform.html?platform=${platform.slug}" aria-label="${platform.title}">
+    <a class="platform-card platform-card-${status.level} reveal" style="--platform-color: ${platform.color}" href="platform.html?platform=${platform.slug}" aria-label="${platform.title}">
       <div>
+        ${platformStatusBadgeHtml(platform)}
         ${platformLogoHtml(platform, true)}
         <h3>${platform.name}</h3>
         <p>${platform.short}</p>
+        <p class="platform-status-note">${escapeHtml(status.detail)}</p>
       </div>
-      <span class="platform-arrow">Open Downloader <i data-lucide="arrow-right"></i></span>
+      <span class="platform-arrow">${status.level === "working" ? "Open Downloader" : "View Status"} <i data-lucide="arrow-right"></i></span>
     </a>
   `;
 }
@@ -1602,7 +1728,9 @@ function renderPlatformPage() {
           </div>
           <h1>${platform.title}</h1>
           <p>${platform.description}</p>
+          ${platformStatusPanelHtml(platform)}
           <div class="platform-badges">
+            <span>${escapeHtml(platformStatus(platform).label)}</span>
             ${platform.types.map((type) => `<span>${type}</span>`).join("")}
           </div>
         </div>
@@ -1614,9 +1742,10 @@ function renderPlatformPage() {
       <div>
         <p class="eyebrow">What you can download</p>
         <h2>${platform.name} formats and quality options</h2>
-        <p>Choose the format that matches your use case. Available output depends on the public source link and the connected processing API.</p>
+        <p>Choose the format that matches your use case. Current live status: ${escapeHtml(platformStatus(platform).detail)}</p>
       </div>
       <ul class="check-list">
+        <li>Live status: ${escapeHtml(platformStatus(platform).label)}</li>
         ${platform.types.map((type) => `<li>${type}</li>`).join("")}
         <li>No sign-up required for the frontend flow</li>
         <li>Mobile, tablet, desktop, and smart browser support</li>
@@ -1655,7 +1784,7 @@ function renderPlatformPage() {
         <h2>Open another dedicated downloader</h2>
       </div>
       <div class="platform-grid">
-        ${platforms.filter((item) => item.slug !== platform.slug).slice(0, 5).map(platformCard).join("")}
+        ${sortedPlatforms(platforms.filter((item) => item.slug !== platform.slug)).slice(0, 5).map(platformCard).join("")}
       </div>
     </section>
   `;
@@ -1726,14 +1855,19 @@ function openTutorialFromHash() {
 function renderSupportMatrix() {
   const mount = document.querySelector("[data-support-matrix]");
   if (!mount) return;
-  mount.innerHTML = platforms.map((platform) => `
-    <article class="matrix-card reveal">
-      <h3>${platform.name}</h3>
-      <p>${platform.title}</p>
-      <ul>${platform.types.slice(0, 5).map((type) => `<li>${type}</li>`).join("")}</ul>
-      <a class="btn btn-secondary" href="platform.html?platform=${platform.slug}"><i data-lucide="arrow-right"></i> Open Tool</a>
-    </article>
-  `).join("");
+  mount.innerHTML = sortedPlatforms().map((platform) => {
+    const status = platformStatus(platform);
+    return `
+      <article class="matrix-card matrix-card-${status.level} reveal">
+        ${platformStatusBadgeHtml(platform)}
+        <h3>${platform.name}</h3>
+        <p>${platform.title}</p>
+        <p class="matrix-status-note">${escapeHtml(status.detail)}</p>
+        <ul>${platform.types.slice(0, 5).map((type) => `<li>${type}</li>`).join("")}</ul>
+        <a class="btn btn-secondary" href="platform.html?platform=${platform.slug}"><i data-lucide="arrow-right"></i> ${status.level === "working" ? "Open Tool" : "View Details"}</a>
+      </article>
+    `;
+  }).join("");
 }
 
 function renderLegalPage() {
@@ -1823,7 +1957,7 @@ function renderSearchResults(query, mount) {
   const normalized = String(query || "").trim().toLowerCase();
   const pages = [
     { title: "Home", label: "Main downloader", url: "index.html" },
-    { title: "Supported Platforms", label: "All 15 downloader tools", url: "supported-platforms.html" },
+    { title: "Supported Platforms", label: "Live status for working and limited downloader tools", url: "supported-platforms.html" },
     { title: "Tutorials", label: "Detailed platform guides", url: "tutorials.html" },
     { title: "Chrome Extension", label: "Browser workflow page", url: "extension.html" },
     { title: "Blog", label: "Downloader articles", url: "blog.html" },

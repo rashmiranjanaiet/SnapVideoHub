@@ -835,8 +835,7 @@ textarea:focus {
 
 .platform-card {
   position: relative;
-  min-height: 210px;
-  aspect-ratio: 1 / 1;
+  min-height: 280px;
   overflow: hidden;
   border: 1px solid var(--line);
   border-radius: var(--radius);
@@ -862,6 +861,18 @@ textarea:focus {
   transform: translateY(-4px);
   border-color: color-mix(in srgb, var(--platform-color) 46%, var(--line));
   box-shadow: var(--shadow);
+}
+
+.platform-card-limited,
+.platform-card-blocked,
+.matrix-card-limited,
+.matrix-card-blocked {
+  border-color: color-mix(in srgb, var(--accent-yellow) 28%, var(--line));
+}
+
+.platform-card-blocked,
+.matrix-card-blocked {
+  border-color: color-mix(in srgb, var(--accent-pink) 32%, var(--line));
 }
 
 .platform-logo {
@@ -937,6 +948,78 @@ textarea:focus {
   margin: 0;
   color: var(--muted);
   font-size: 0.9rem;
+}
+
+.platform-status-badge {
+  position: relative;
+  min-height: 28px;
+  display: inline-flex;
+  align-items: center;
+  width: fit-content;
+  max-width: 100%;
+  margin-bottom: 12px;
+  border: 1px solid color-mix(in srgb, var(--accent-blue) 36%, var(--line));
+  border-radius: 999px;
+  padding: 5px 9px;
+  background: color-mix(in srgb, var(--accent-blue) 10%, var(--surface));
+  color: var(--text);
+  font-size: 0.78rem;
+  font-weight: 900;
+  line-height: 1.1;
+}
+
+.platform-status-working {
+  border-color: color-mix(in srgb, var(--accent-green) 44%, var(--line));
+  background: color-mix(in srgb, var(--accent-green) 12%, var(--surface));
+}
+
+.platform-status-direct,
+.platform-status-limited {
+  border-color: color-mix(in srgb, var(--accent-yellow) 44%, var(--line));
+  background: color-mix(in srgb, var(--accent-yellow) 12%, var(--surface));
+}
+
+.platform-status-blocked {
+  border-color: color-mix(in srgb, var(--accent-pink) 44%, var(--line));
+  background: color-mix(in srgb, var(--accent-pink) 12%, var(--surface));
+}
+
+.platform-status-note,
+.matrix-status-note {
+  margin-top: 8px !important;
+  font-size: 0.82rem !important;
+  line-height: 1.35;
+}
+
+.platform-status-panel {
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: color-mix(in srgb, var(--surface) 86%, transparent);
+  padding: 12px;
+  margin: 16px 0;
+}
+
+.platform-status-panel strong {
+  display: block;
+  line-height: 1.2;
+}
+
+.platform-status-panel p {
+  margin: 5px 0 0;
+  color: var(--muted);
+}
+
+.platform-status-panel-working {
+  border-color: color-mix(in srgb, var(--accent-green) 42%, var(--line));
+}
+
+.platform-status-panel-direct,
+.platform-status-panel-limited {
+  border-color: color-mix(in srgb, var(--accent-yellow) 42%, var(--line));
+}
+
+.platform-status-panel-blocked {
+  border-color: color-mix(in srgb, var(--accent-pink) 42%, var(--line));
 }
 
 .platform-arrow {
@@ -1851,7 +1934,7 @@ textarea:focus {
 
   .platform-card {
     aspect-ratio: auto;
-    min-height: 178px;
+    min-height: 280px;
   }
 
   .section,
