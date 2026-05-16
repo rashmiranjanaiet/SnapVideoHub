@@ -8,6 +8,7 @@ const { Readable } = require("node:stream");
 
 const root = __dirname;
 const port = Number(process.env.PORT || 3000);
+const host = process.env.HOST || "0.0.0.0";
 const maxBodyBytes = 1_000_000;
 
 const mimeTypes = {
@@ -105,8 +106,8 @@ const server = http.createServer(async (request, response) => {
   }
 });
 
-server.listen(port, () => {
-  console.log(`SnapVideoHub is running at http://localhost:${port}`);
+server.listen(port, host, () => {
+  console.log(`SnapVideoHub is running at http://${host}:${port}`);
 });
 
 async function handleHealth(response) {
@@ -118,6 +119,7 @@ async function handleHealth(response) {
   sendJson(response, 200, {
     ok: true,
     service: "SnapVideoHub backend",
+    host,
     port,
     extractor,
     ffmpeg

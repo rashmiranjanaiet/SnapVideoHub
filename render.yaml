@@ -1,0 +1,18 @@
+services:
+  - type: web
+    name: snapvideohub
+    runtime: docker
+    plan: free
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    healthCheckPath: /api/health
+    autoDeployTrigger: commit
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: "10000"
+      - key: HOST
+        value: "0.0.0.0"
+      - key: YTDLP_PATH
+        value: /usr/local/bin/yt-dlp

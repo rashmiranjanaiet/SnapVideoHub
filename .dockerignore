@@ -1,0 +1,12 @@
+.git
+.gitignore
+node_modules
+npm-debug.log*
+data
+job_logs
+job_logs.zip
+*.log
+*.tmp
+*.zip
+.env
+.env.*
