@@ -201,6 +201,7 @@ const API_BASE = location.protocol === "file:" ? "http://localhost:3000" : "";
 const LANGUAGE_STORAGE_KEY = "snapvideohub-language";
 const GOOGLE_TRANSLATE_ELEMENT_ID = "google_translate_element";
 const GOOGLE_TRANSLATE_SCRIPT_ID = "google-translate-script";
+const RESULT_SCROLL_HANDOFF_TICKS = 3;
 
 const languages = [
   { code: "en", nativeName: "English", name: "English", dir: "ltr" },
@@ -492,15 +493,199 @@ const legalDocs = {
     title: "Terms and Conditions for SnapVideoHub",
     intro: "By accessing or using SnapVideoHub, users agree to comply with these terms of service.",
     sections: [
-      ["Service Description", ["SnapVideoHub provides online tools that process publicly accessible media links for personal downloading purposes."]],
-      ["User Responsibilities", ["Use the service legally", "Do not violate copyright laws", "Do not abuse servers or infrastructure", "Do not upload malware or harmful content", "Do not misuse automated systems or bots"]],
-      ["Intellectual Property", ["SnapVideoHub does not claim ownership of third-party media. Trademarks, logos, and media belong to their respective owners."]],
-      ["Copyright Compliance", ["Users must ensure they have the legal right or permission to download content from third-party platforms.", "SnapVideoHub does not encourage piracy, copyright infringement, or unauthorized redistribution."]],
-      ["Service Availability", ["Features may change", "Platform support may be added or removed", "Services may be temporarily suspended", "Usage may be limited during high traffic"]],
-      ["Disclaimer", ["SnapVideoHub is provided as is without warranties of any kind."]],
-      ["Limitation of Liability", ["SnapVideoHub is not responsible for user misuse, copyright violations by users, third-party platform changes, data loss, or interruptions."]],
-      ["Termination", ["We reserve the right to block or restrict access to users who violate policies or misuse services."]],
-      ["Contact", ["legal@snapvideohub.com"]]
+      ["Service Description", ["SnapVideoHub is a free online video downloader and media downloading platform for publicly accessible media from supported platforms."]],
+      ["Usage Rules", ["Use SnapVideoHub only for lawful purposes and download only content you own or are legally authorized to access."]],
+      ["Intellectual Property", ["Third-party content belongs to its respective owners. SnapVideoHub does not claim ownership of downloaded content."]],
+      ["Disclaimer", ["SnapVideoHub is provided as is and as available without warranties of any kind."]],
+      ["Limitation of Liability", ["SnapVideoHub is not responsible for user misuse, copyright violations, third-party platform changes, data loss, or interruptions."]],
+      ["Indemnification", ["Users agree to defend and hold SnapVideoHub harmless from claims arising from misuse of the service."]],
+      ["Service Changes and Termination", ["SnapVideoHub may modify, suspend, limit, or discontinue any part of the service at any time."]],
+      ["Privacy", ["Your use of SnapVideoHub is also governed by our Privacy Policy."]]
+    ],
+    content: [
+      {
+        heading: "1. Service Description",
+        sections: [
+          {
+            heading: "1.1 Service Content",
+            paragraphs: [
+              "SnapVideoHub is a free online video downloader and media downloading platform that allows users to download publicly accessible videos, reels, shorts, stories, MP3 audio, thumbnails, GIFs, photos, and other media from supported social media and media-sharing platforms.",
+              "SnapVideoHub provides fast, secure, and cloud-based downloading tools for users worldwide without requiring software installation or account registration."
+            ]
+          },
+          {
+            heading: "1.2 Service Features",
+            list: [
+              "Completely free to use",
+              "No registration or login required",
+              "Supports HD, Full HD, 2K, and 4K downloads",
+              "Fast cloud-based processing technology",
+              "Mobile, tablet, and desktop compatible",
+              "Supports multiple video and audio formats",
+              "Does not permanently store user download history",
+              "Supports videos, reels, shorts, stories, MP3 audio, thumbnails, GIFs, and images",
+              "Works on Chrome, Safari, Firefox, Edge, Opera, and modern browsers"
+            ]
+          },
+          {
+            heading: "1.3 Supported Platforms",
+            paragraphs: ["SnapVideoHub supports downloading publicly accessible media from supported platforms including:"],
+            list: ["YouTube", "Instagram", "TikTok", "Facebook", "X Twitter", "Reddit", "Pinterest", "Telegram", "WhatsApp", "Threads", "Twitch", "Discord", "LinkedIn", "Dailymotion"],
+            footer: "Platform availability may change over time depending on third-party platform updates and restrictions."
+          }
+        ]
+      },
+      {
+        heading: "2. Usage Rules",
+        sections: [
+          {
+            heading: "2.1 Lawful Use",
+            paragraphs: ["By using SnapVideoHub, you agree to:"],
+            list: [
+              "Use the Service only for lawful purposes",
+              "Comply with applicable local, national, and international laws",
+              "Respect copyright and intellectual property rights",
+              "Download only content you own or are legally authorized to access",
+              "Use downloaded content responsibly and ethically"
+            ],
+            footer: "Users are solely responsible for ensuring they have permission to download and use media content."
+          },
+          {
+            heading: "2.2 Prohibited Actions",
+            paragraphs: ["You must not:"],
+            list: [
+              "Download copyrighted content without authorization",
+              "Use the Service for illegal activities",
+              "Attempt unauthorized access to the platform",
+              "Abuse servers or use automated bots excessively",
+              "Remove copyright notices or ownership information",
+              "Redistribute downloaded content illegally",
+              "Upload malicious software or harmful code",
+              "Violate privacy, intellectual property, or legal rights of others"
+            ]
+          },
+          {
+            heading: "2.3 Personal Use",
+            paragraphs: ["SnapVideoHub is intended primarily for personal and non-commercial use.", "We strongly recommend users:"],
+            list: [
+              "Obtain permission before sharing downloaded content",
+              "Follow source platform terms of service",
+              "Respect creator rights and platform policies"
+            ]
+          }
+        ]
+      },
+      {
+        heading: "3. Intellectual Property",
+        sections: [
+          {
+            heading: "3.1 Third-Party Content",
+            paragraphs: [
+              "All copyrights, trademarks, and intellectual property rights related to downloaded content belong to their respective owners and creators.",
+              "SnapVideoHub does not claim ownership of third-party content.",
+              "Users are fully responsible for how downloaded content is used."
+            ]
+          },
+          {
+            heading: "3.2 Platform Content",
+            paragraphs: [
+              "The SnapVideoHub website, including design, branding, code, text, graphics, and platform features, is protected by intellectual property and copyright laws.",
+              "You may not copy, distribute, modify, or reproduce platform content without written permission."
+            ]
+          }
+        ]
+      },
+      {
+        heading: "4. Disclaimer",
+        sections: [
+          {
+            heading: "4.1 Service Provided As Is",
+            paragraphs: ["SnapVideoHub is provided on an as is and as available basis without warranties of any kind.", "We do not guarantee:"],
+            list: [
+              "Uninterrupted service",
+              "Error-free operation",
+              "Continuous platform compatibility",
+              "Permanent content availability"
+            ]
+          },
+          {
+            heading: "4.2 Content Disclaimer",
+            paragraphs: ["SnapVideoHub does not host or permanently store third-party media files.", "We are not responsible for:"],
+            list: [
+              "Accuracy of downloaded content",
+              "Availability of source media",
+              "Changes made by third-party platforms",
+              "User misuse of downloaded content"
+            ]
+          },
+          {
+            heading: "4.3 Third-Party Platforms",
+            paragraphs: [
+              "SnapVideoHub is not affiliated with, endorsed by, or officially connected to third-party social media platforms.",
+              "All trademarks and platform names belong to their respective owners."
+            ]
+          }
+        ]
+      },
+      {
+        heading: "5. Limitation of Liability",
+        sections: [
+          {
+            paragraphs: ["To the maximum extent permitted by applicable law:"],
+            list: [
+              "SnapVideoHub shall not be liable for direct, indirect, incidental, or consequential damages",
+              "We are not responsible for data loss, business interruption, or service interruptions",
+              "Users assume full responsibility for downloaded content and usage"
+            ],
+            footer: "The Service is provided free of charge and without liability guarantees."
+          }
+        ]
+      },
+      {
+        heading: "6. Indemnification",
+        sections: [
+          {
+            paragraphs: ["By using SnapVideoHub, you agree to defend, indemnify, and hold harmless SnapVideoHub, its affiliates, employees, and partners from any claims, liabilities, damages, losses, or legal expenses arising from:"],
+            list: [
+              "Violation of these Terms",
+              "Misuse of the Service",
+              "Infringement of third-party rights",
+              "Illegal use of downloaded content"
+            ]
+          }
+        ]
+      },
+      {
+        heading: "7. Service Changes and Termination",
+        sections: [
+          {
+            heading: "7.1 Service Modification",
+            paragraphs: ["SnapVideoHub reserves the right to modify, suspend, limit, or discontinue any part of the Service at any time without prior notice."]
+          },
+          {
+            heading: "7.2 Termination of Use",
+            paragraphs: ["We may restrict or terminate access to the Service for users who:"],
+            list: [
+              "Violate these Terms",
+              "Abuse platform resources",
+              "Engage in illegal or harmful activities",
+              "Attempt unauthorized access or attacks"
+            ]
+          }
+        ]
+      },
+      {
+        heading: "8. Privacy",
+        sections: [
+          {
+            paragraphs: [
+              "Your use of SnapVideoHub is also governed by our Privacy Policy.",
+              "SnapVideoHub respects user privacy and does not require passwords, private social media credentials, or unnecessary personal information.",
+              "All website traffic is protected using secure HTTPS encryption technology."
+            ]
+          }
+        ]
+      }
     ]
   },
   dmca: {
@@ -607,13 +792,13 @@ function renderHeader() {
           ${links.map(([label, href, active]) => `<a class="nav-link${active ? " active" : ""}" href="${href}">${label}</a>`).join("")}
         </nav>
         <div class="nav-actions">
-          <div class="language-wrap">
-            <button class="icon-btn" type="button" data-language-toggle aria-label="Language: ${escapeHtml(languageDisplayName(selectedLanguage))}" title="Language: ${escapeHtml(languageDisplayName(selectedLanguage))}"><i data-lucide="languages"></i></button>
-            <div class="language-menu" data-language-menu hidden>
+          <div class="language-wrap notranslate" translate="no">
+            <button class="icon-btn notranslate" type="button" data-language-toggle aria-label="Language: ${escapeHtml(languageDisplayName(selectedLanguage))}" title="Language: ${escapeHtml(languageDisplayName(selectedLanguage))}" translate="no"><i data-lucide="languages"></i></button>
+            <div class="language-menu notranslate" data-language-menu translate="no" hidden>
               ${languages.map((language) => `
-                <button type="button" data-language-option="${language.code}" lang="${language.code}" dir="${language.dir}" aria-pressed="${language.code === selectedLanguage.code ? "true" : "false"}">
-                  <span>${escapeHtml(language.nativeName)}</span>
-                  <small>${escapeHtml(language.name)}</small>
+                <button class="notranslate" type="button" data-language-option="${language.code}" lang="${language.code}" dir="${language.dir}" translate="no" aria-pressed="${language.code === selectedLanguage.code ? "true" : "false"}">
+                  <span class="notranslate" translate="no">${escapeHtml(language.nativeName)}</span>
+                  <small class="notranslate" translate="no">${escapeHtml(language.name)}</small>
                 </button>
               `).join("")}
             </div>
@@ -735,6 +920,34 @@ function bindGlobalControls() {
       event.preventDefault();
       submitContactForm(event.target);
     }
+  });
+
+  bindLegalNavigation();
+}
+
+function bindLegalNavigation() {
+  if (document.body.dataset.page !== "legal") return;
+
+  document.addEventListener("click", (event) => {
+    const link = event.target.closest(".legal-tabs a");
+    if (!link) return;
+
+    const nextUrl = new URL(link.href, location.href);
+    if (nextUrl.pathname !== location.pathname) return;
+
+    event.preventDefault();
+    const previousY = window.scrollY;
+    history.pushState({ doc: nextUrl.searchParams.get("doc") || "privacy" }, "", nextUrl.href);
+    renderLegalPage();
+    initReveal();
+    refreshIcons();
+    window.scrollTo({ top: previousY, left: 0, behavior: "auto" });
+  });
+
+  window.addEventListener("popstate", () => {
+    renderLegalPage();
+    initReveal();
+    refreshIcons();
   });
 }
 
@@ -876,8 +1089,9 @@ function ensureGoogleTranslateMount() {
 
   mount = document.createElement("div");
   mount.id = GOOGLE_TRANSLATE_ELEMENT_ID;
-  mount.className = "google-translate-mount";
+  mount.className = "google-translate-mount notranslate";
   mount.setAttribute("aria-hidden", "true");
+  mount.setAttribute("translate", "no");
   document.body.appendChild(mount);
   return mount;
 }
@@ -982,6 +1196,10 @@ function renderDownloader(mount, defaultPlatform = "auto") {
         <button class="btn btn-primary" type="submit"><i data-lucide="download"></i> Download Now</button>
       </div>
       <div class="result-panel" data-result-panel hidden></div>
+      <p class="download-legal-note">
+        Respect copyright. Only download or back up content you are authorized to keep. No infringement or illegal use.
+        By using this service, you agree to the <a href="legal.html?doc=terms">Terms of Service</a>.
+      </p>
     </form>
   `;
   bindDownloader(mount.querySelector("[data-downloader-form]"));
@@ -1003,6 +1221,7 @@ function bindDownloader(form) {
   const platformSelect = form.querySelector("[data-platform-select]");
   const qualitySelect = form.querySelector("[data-quality-select]");
   const resultPanel = form.querySelector("[data-result-panel]");
+  bindResultPanelScrollHandoff(resultPanel);
   form.querySelector("[data-paste-url]")?.addEventListener("click", async () => {
     try {
       const text = await navigator.clipboard.readText();
@@ -1022,6 +1241,14 @@ function bindDownloader(form) {
     }
   });
 
+  form.querySelectorAll('input[name="format"]').forEach((radio) => {
+    radio.addEventListener("change", () => {
+      if (input.value.trim() && !resultPanel.hidden) {
+        form.requestSubmit();
+      }
+    });
+  });
+
   form.addEventListener("submit", async (event) => {
     event.preventDefault();
     const url = input.value.trim();
@@ -1035,6 +1262,7 @@ function bindDownloader(form) {
     const format = new FormData(form).get("format") || "video";
     const quality = qualitySelect.options[qualitySelect.selectedIndex].text;
     resultPanel.hidden = false;
+    resultPanel.scrollTop = 0;
     resultPanel.innerHTML = loadingResultHtml(tool, format, quality);
     resultPanel.scrollIntoView({ behavior: "smooth", block: "nearest" });
     refreshIcons();
@@ -1055,10 +1283,12 @@ function bindDownloader(form) {
       if (!response.ok) throw new Error(data.message || "The backend could not analyze this link.");
       await finishResultProgress(progress);
       resultPanel.innerHTML = resultHtml(data, tool, format, quality);
+      resultPanel.scrollTop = 0;
       bindResultPreviews(resultPanel);
     } catch (error) {
       stopResultProgress(progress);
       resultPanel.innerHTML = offlineResultHtml(tool, format, quality, error.message);
+      resultPanel.scrollTop = 0;
     }
     refreshIcons();
   });
@@ -1177,6 +1407,49 @@ function bindResultPreviews(resultPanel) {
     button.replaceWith(video);
     video.play().catch(() => {});
   });
+}
+
+function bindResultPanelScrollHandoff(resultPanel) {
+  if (!resultPanel || resultPanel.dataset.scrollHandoffBound) return;
+  resultPanel.dataset.scrollHandoffBound = "true";
+
+  let edgeScrollCount = 0;
+  let lastDirection = 0;
+  let lastWheelTime = 0;
+
+  resultPanel.addEventListener("wheel", (event) => {
+    if (resultPanel.hidden || !event.deltaY) return;
+
+    const direction = Math.sign(event.deltaY);
+    const now = Date.now();
+    const canScroll = resultPanel.scrollHeight > resultPanel.clientHeight + 1;
+    const atTop = resultPanel.scrollTop <= 0;
+    const atBottom = Math.ceil(resultPanel.scrollTop + resultPanel.clientHeight) >= resultPanel.scrollHeight;
+    const pastEdge = !canScroll || (direction < 0 && atTop) || (direction > 0 && atBottom);
+
+    if (!pastEdge) {
+      edgeScrollCount = 0;
+      lastDirection = direction;
+      lastWheelTime = now;
+      return;
+    }
+
+    if (direction !== lastDirection || now - lastWheelTime > 900) {
+      edgeScrollCount = 0;
+    }
+
+    lastDirection = direction;
+    lastWheelTime = now;
+    edgeScrollCount += 1;
+
+    if (edgeScrollCount < RESULT_SCROLL_HANDOFF_TICKS) {
+      event.preventDefault();
+      return;
+    }
+
+    window.scrollBy({ top: event.deltaY, left: event.deltaX, behavior: "auto" });
+    event.preventDefault();
+  }, { passive: false });
 }
 
 function startResultProgress(resultPanel) {
@@ -1302,7 +1575,7 @@ function platformCard(platform) {
   return `
     <a class="platform-card reveal" style="--platform-color: ${platform.color}" href="platform.html?platform=${platform.slug}" aria-label="${platform.title}">
       <div>
-        <div class="platform-logo"><img src="${iconUrl(platform)}" alt="${platform.name} logo" loading="lazy"></div>
+        ${platformLogoHtml(platform, true)}
         <h3>${platform.name}</h3>
         <p>${platform.short}</p>
       </div>
@@ -1322,7 +1595,7 @@ function renderPlatformPage() {
       <div class="platform-hero-inner">
         <div>
           <div class="platform-title-row">
-            <div class="platform-logo">${platform.slug === "mp3" ? `<i data-lucide="music"></i>` : `<img src="${iconUrl(platform)}" alt="${platform.name} logo">`}</div>
+            ${platformLogoHtml(platform, false)}
             <p class="eyebrow">${platform.name} Downloader</p>
           </div>
           <h1>${platform.title}</h1>
@@ -1481,7 +1754,7 @@ function renderLegalPage() {
         ${Object.entries(legalDocs).map(([slug, item]) => `<a class="${slug === key ? "active" : ""}" href="legal.html?doc=${slug}">${item.label}</a>`).join("")}
       </nav>
       <div class="legal-content">
-        ${doc.sections.map(([heading, items]) => `
+        ${doc.content ? renderLegalContent(doc.content) : doc.sections.map(([heading, items]) => `
           <article class="legal-card reveal">
             <h2>${heading}</h2>
             <ul>${items.map((item) => `<li>${item}</li>`).join("")}</ul>
@@ -1491,6 +1764,22 @@ function renderLegalPage() {
       </div>
     </section>
   `;
+}
+
+function renderLegalContent(content) {
+  return content.map((group) => `
+    <article class="legal-card legal-full reveal">
+      <h2>${escapeHtml(group.heading)}</h2>
+      ${(group.sections || []).map((section) => `
+        <div class="legal-subsection">
+          ${section.heading ? `<h3>${escapeHtml(section.heading)}</h3>` : ""}
+          ${(section.paragraphs || []).map((paragraph) => `<p>${escapeHtml(paragraph)}</p>`).join("")}
+          ${section.list ? `<ul>${section.list.map((item) => `<li>${escapeHtml(item)}</li>`).join("")}</ul>` : ""}
+          ${section.footer ? `<p>${escapeHtml(section.footer)}</p>` : ""}
+        </div>
+      `).join("")}
+    </article>
+  `).join("");
 }
 
 function contactFormHtml() {
@@ -1549,8 +1838,28 @@ function renderSearchResults(query, mount) {
   `).join("") || `<p class="search-result">No results found.</p>`;
 }
 
+function platformLogoHtml(platform, lazy = true) {
+  const fallback = platform.slug === "linkedin" ? "in" : platform.name.slice(0, 2);
+  if (platform.slug === "mp3") {
+    return `<div class="platform-logo platform-logo-${platform.slug}" data-fallback="${escapeHtml(fallback)}"><i data-lucide="music"></i></div>`;
+  }
+  return `
+    <div class="platform-logo platform-logo-${platform.slug}" data-fallback="${escapeHtml(fallback)}">
+      <img src="${iconUrl(platform)}" alt="${platform.name} logo"${lazy ? " loading=\"lazy\"" : ""} onerror="this.parentElement.classList.add('logo-failed');this.remove();">
+    </div>
+  `;
+}
+
 function iconUrl(platform) {
+  if (platform.slug === "linkedin") {
+    return linkedinIconDataUrl();
+  }
   return `https://cdn.simpleicons.org/${platform.icon}/${platform.color.replace("#", "")}`;
+}
+
+function linkedinIconDataUrl() {
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" rx="12" fill="#0a66c2"/><circle cx="20" cy="19" r="6" fill="#fff"/><path fill="#fff" d="M15 28h10v24H15zM30 28h9v3.4c1.4-2.1 4-4 8.1-4 8.5 0 10 5.6 10 12.9V52H47V41.7c0-2.5 0-5.7-3.5-5.7s-4 2.7-4 5.5V52H30z"/></svg>`;
+  return `data:image/svg+xml,${encodeURIComponent(svg)}`;
 }
 
 function initReveal() {

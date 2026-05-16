@@ -237,7 +237,7 @@ async function handleExtractorAnalyze(remoteUrl, platform, requestOptions, respo
     status: options.length ? "ready" : "connector_required",
     platformName: platform.name,
     title: info.title,
-    message: options.length ? `${platform.name} public media options are ready.` : "No downloadable public formats were returned for this link.",
+    message: options.length ? `${platform.name} public media options are ready.` : noExtractorOptionsMessage(requestOptions.requestedFormat, platform),
     note: "Public media only. Login-required, private, blocked, DRM-protected, and bot-check pages can fail. MP3 conversion or merged HD formats may need ffmpeg; otherwise the server returns the original stream format.",
     options
   });
@@ -342,8 +342,6 @@ function buildExtractorOptions(info, remoteUrl, platform, requestOptions) {
           previewUrl: directMediaUrl(thumbnail, `${title}-thumbnail.jpg`, true),
           downloadUrl: directMediaUrl(thumbnail, `${title}-thumbnail.jpg`)
         });
-      } else {
-        addBestExtractorOption(addOption, sourceUrl, "best", `${title}.jpg`, `${prefix}Best available image`, "image", "The extractor will try to download the best public image or preview.");
       }
       return;
     }
@@ -359,8 +357,21 @@ function buildExtractorOptions(info, remoteUrl, platform, requestOptions) {
           previewUrl: extractorDownloadUrl(sourceUrl, audio.format_id, `${title}.${ext}`, true),
           downloadUrl: extractorDownloadUrl(sourceUrl, audio.format_id, `${title}.${ext}`)
         });
-      } else {
-        addBestExtractorOption(addOption, sourceUrl, "bestaudio/best", `${title}.m4a`, `${prefix}Best available audio`, "music", "The extractor will try to return the best public audio stream.");
+      }
+      return;
+    }
+
+    if (requestedFormat === "gif") {
+      const gifs = gifFormats(item);
+      const perItemLimit = items.length > 1 ? 1 : 4;
+      for (const format of gifs.slice(0, perItemLimit)) {
+        addOption({
+          label: `${prefix}GIF image`,
+          icon: "image",
+          description: gifDescription(format),
+          previewUrl: extractorDownloadUrl(sourceUrl, format.format_id, `${title}.gif`, true),
+          downloadUrl: extractorDownloadUrl(sourceUrl, format.format_id, `${title}.gif`)
+        });
       }
       return;
     }
@@ -370,10 +381,9 @@ function buildExtractorOptions(info, remoteUrl, platform, requestOptions) {
     for (const format of videos.slice(0, perItemLimit)) {
       const ext = cleanExtension(format.ext) || "mp4";
       const height = format.height ? `${format.height}p` : ext.toUpperCase();
-      const labelFormat = requestedFormat === "gif" ? "source video" : "video";
       addOption({
-        label: `${prefix}${height} ${labelFormat}`,
-        icon: requestedFormat === "gif" ? "film" : "video",
+        label: `${prefix}${height} video`,
+        icon: "video",
         description: videoDescription(format),
         thumbnailUrl: thumbnail ? directMediaUrl(thumbnail, `${title}-thumbnail.jpg`, true) : "",
         previewUrl: extractorDownloadUrl(sourceUrl, format.format_id, `${title}-${height}.${ext}`, true),
@@ -382,8 +392,8 @@ function buildExtractorOptions(info, remoteUrl, platform, requestOptions) {
     }
 
     if (!videos.length) {
-      const fallbackName = requestedFormat === "gif" ? `${title}.mp4` : `${title}.${cleanExtension(item.ext) || "mp4"}`;
-      addBestExtractorOption(addOption, sourceUrl, "best", fallbackName, `${prefix}Best available media`, requestedFormat === "gif" ? "film" : "download", "The extractor will try to return the best public media file for this link.");
+      const fallbackName = `${title}.${cleanExtension(item.ext) || "mp4"}`;
+      addBestExtractorOption(addOption, sourceUrl, "best", fallbackName, `${prefix}Best available media`, "download", "The extractor will try to return the best public media file for this link.");
     }
 
     if (thumbnail && options.length < 10) {
@@ -459,6 +469,13 @@ function bestAudioFormat(item) {
     .sort((a, b) => scoreAudioFormat(b) - scoreAudioFormat(a))[0];
 }
 
+function gifFormats(item) {
+  const formats = Array.isArray(item.formats) ? item.formats : [];
+  return formats
+    .filter((format) => format.format_id && cleanExtension(format.ext) === "gif")
+    .sort((a, b) => (b.filesize || b.filesize_approx || 0) - (a.filesize || a.filesize_approx || 0));
+}
+
 function addBestExtractorOption(addOption, sourceUrl, selector, fileName, label, icon, description) {
   addOption({
     label,
@@ -503,6 +520,27 @@ function audioDescription(format) {
   if (format.ext) parts.push(String(format.ext).toUpperCase());
   if (format.filesize || format.filesize_approx) parts.push(formatBytes(format.filesize || format.filesize_approx));
   return parts.join(" - ") || "Best available audio-only stream.";
+}
+
+function gifDescription(format) {
+  const parts = [];
+  if (format.filesize || format.filesize_approx) parts.push(formatBytes(format.filesize || format.filesize_approx));
+  parts.push("GIF");
+  if (format.width && format.height) parts.push(`${format.width}x${format.height}`);
+  return parts.join(" - ");
+}
+
+function noExtractorOptionsMessage(requestedFormat, platform) {
+  if (requestedFormat === "audio") {
+    return `No separate public audio stream was returned for this ${platform.name} link. Try another public link or choose Video.`;
+  }
+  if (requestedFormat === "thumbnail") {
+    return `No public thumbnail image was returned for this ${platform.name} link. Try another public post or choose Video.`;
+  }
+  if (requestedFormat === "gif") {
+    return `No real GIF file was returned for this ${platform.name} link. Many platforms store GIF-style posts as MP4 video, so choose Video when GIF is unavailable.`;
+  }
+  return "No downloadable public formats were returned for this link.";
 }
 
 function qualityTargetHeight(value) {
